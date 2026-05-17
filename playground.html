@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Fig Playground</title>
+  <script src="dist/stickyfig.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-dark: #1a1a2e;
+      --bg-mid: #16213e;
+      --bg-editor: #0f172a;
+      --bg-preview: #ffffff;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --border: #2d3748;
+      --error: #f87171;
+      --success: #4ade80;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .toolbar .logo {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .toolbar .logo span {
+      color: var(--text-dim);
+      font-weight: 400;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+    .toolbar select {
+      background: var(--bg-editor);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 28px 6px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+    .toolbar select:hover { border-color: var(--accent); }
+    .toolbar .spacer { flex: 1; }
+    .toolbar button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .toolbar button:hover { background: var(--accent-hover); }
+    .toolbar button.secondary {
+      background: var(--bg-editor);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .toolbar button.secondary:hover { border-color: var(--accent); color: var(--accent-hover); }
+    .toolbar .status {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .toolbar .status .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    .toolbar .status .dot.error { background: var(--error); }
+
+    /* ── Main Layout ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Editor Panel ── */
+    .editor-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid var(--border);
+      min-width: 300px;
+    }
+    .editor-header {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .editor-header .tab {
+      padding: 4px 12px;
+      background: var(--bg-editor);
+      border-radius: 4px 4px 0 0;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .editor-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .editor-wrap textarea {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-editor);
+      color: #e2e8f0;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 14px 16px;
+      font-family: 'Fira Code', 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.65;
+      tab-size: 2;
+      overflow: auto;
+    }
+    .editor-wrap textarea::selection { background: rgba(99,102,241,0.35); }
+
+    /* ── Preview Panel ── */
+    .preview-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      min-width: 300px;
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      background: var(--bg-mid);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+    .preview-header .tab {
+      padding: 4px 12px;
+      background: #fff;
+      border-radius: 4px 4px 0 0;
+      color: #333;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .preview-header .actions { display: flex; gap: 6px; }
+    .preview-header .actions button {
+      background: var(--bg-editor);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .preview-header .actions button:hover { border-color: var(--accent); color: var(--accent-hover); }
+    .preview-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .preview-wrap svg {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+
+    /* ── Error Panel ── */
+    .error-panel {
+      background: #1c1017;
+      color: var(--error);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
+      padding: 10px 16px;
+      line-height: 1.5;
+      display: none;
+      border-top: 1px solid #5f1d1d;
+      max-height: 150px;
+      overflow: auto;
+    }
+    .error-panel.visible { display: block; }
+
+    /* ── Resizer ── */
+    .resizer {
+      width: 4px;
+      cursor: col-resize;
+      background: var(--border);
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .resizer:hover, .resizer.active { background: var(--accent); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .editor-panel, .preview-panel { width: 100%; min-width: 0; }
+      .editor-panel { height: 50%; border-right: none; border-bottom: 2px solid var(--border); }
+      .preview-panel { height: 50%; }
+      .resizer { display: none; }
+      .toolbar { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="logo">Sticky Fig<span>Playground</span></div>
+  <select id="examples">
+    <option value="">-- Load Example --</option>
+    <option value="hello">Hello World</option>
+    <option value="expressions">Expressions Gallery</option>
+    <option value="conversation">Two-Panel Conversation</option>
+    <option value="action">Action Scene</option>
+    <option value="custom_pose">Custom Poses</option>
+    <option value="all_bubbles">Speech Bubble Styles</option>
+    <option value="character_styles">Hair &amp; Hats</option>
+    <option value="effects">Visual Effects</option>
+    <option value="vertical_strip">Vertical Strip</option>
+  </select>
+  <button id="renderBtn" title="Render (Ctrl+Enter)">&#9654; Run</button>
+  <div class="spacer"></div>
+  <div class="status" id="status"><div class="dot" id="statusDot"></div><span id="statusText">Ready</span></div>
+  <button id="downloadBtn" class="secondary" title="Download SVG">&#8615; SVG</button>
+  <button id="copyBtn" class="secondary" title="Copy SVG to clipboard">&#9112; Copy</button>
+</div>
+
+<div class="main">
+  <div class="editor-panel" id="editorPanel">
+    <div class="editor-header"><div class="tab">script.js</div></div>
+    <div class="editor-wrap">
+      <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+    </div>
+  </div>
+  <div class="resizer" id="resizer"></div>
+  <div class="preview-panel" id="previewPanel">
+    <div class="preview-header">
+      <div class="tab">Preview</div>
+      <div class="actions">
+        <button id="zoomFit">Fit</button>
+        <button id="zoom100">100%</button>
+      </div>
+    </div>
+    <div class="preview-wrap" id="preview">
+      <div style="color:#999;font-family:sans-serif;font-size:14px;">Write code on the left and press Run (or Ctrl+Enter)</div>
+    </div>
+  </div>
+</div>
+
+<div class="error-panel" id="errorPanel"></div>
+
+<script>
+(function() {
+  var F = StickyFig;
+
+  // ── Examples ──
+  var EXAMPLES = {
+    hello: `// Hello World - A simple single-panel comic
+const alice = figure('Alice', {
+  expression: 'happy',
+  pose: POSES.waving,
+  x: 120, y: 160,
+  hair: 'long',
+})
+
+const comic = strip({
+  title: 'Hello World!',
+  layout: 'row',
+  width: 600,
+})
+
+comic.addPanel(panel({
+  background: '#e8f5e9',
+  figures: [alice],
+  bubbles: [
+    bubble('Hello, World!', {
+      x: 200, y: 40,
+      tailX: 120, tailY: 90,
+    }),
+  ],
+}))
+
+return comic`,
+
+    expressions: `// Expressions Gallery - All 12 facial expressions
+const exprs = Object.keys(EXPRESSIONS)
+const figures = exprs.map((e, i) => {
+  const col = i % 4
+  const row = Math.floor(i / 4)
+  return figure(e, {
+    expression: e,
+    x: 70 + col * 160,
+    y: 100 + row * 120,
+    scale: 0.75,
+    stroke: '#333',
+  })
+})
+
+return strip({
+  title: 'Expressions',
+  layout: 'row',
+  width: 650,
+}).addPanel(panel({
+  height: 380,
+  background: '#fefefe',
+  figures: figures,
+  bubbles: exprs.map((e, i) => {
+    const col = i % 4
+    const row = Math.floor(i / 4)
+    return bubble(e, {
+      x: 70 + col * 160,
+      y: 15 + row * 120,
+      maxWidth: 100,
+      fontSize: 11,
+    })
+  }),
+}))`,
+
+    conversation: `// Two-Panel Conversation
+const alice = figure('Alice', {
+  expression: 'happy', pose: POSES.waving,
+  x: 80, y: 150, hair: 'long', stroke: '#555',
+})
+const bob = figure('Bob', {
+  expression: 'surprised', pose: POSES.standing,
+  x: 280, y: 150, hat: 'tophat', stroke: '#555',
+})
+
+const comic = strip({
+  title: 'The Meeting',
+  layout: 'row', width: 800,
+})
+
+comic
+  .addPanel(panel({
+    background: '#fff8e1',
+    figures: [alice, bob],
+    bubbles: [
+      bubble('Hey Bob! Long time no see!', {
+        x: 150, y: 30, tailX: 80, tailY: 75,
+      }),
+      bubble('Oh! Alice?!', {
+        x: 330, y: 30, tailX: 280, tailY: 75,
+      }),
+    ],
+  }))
+  .addPanel(panel({
+    background: '#e3f2fd',
+    figures: [
+      figure('Alice', {
+        expression: 'wink', pose: POSES.standing,
+        x: 80, y: 150, hair: 'long', stroke: '#555',
+      }),
+      figure('Bob', {
+        expression: 'laughing', pose: POSES.armsUp,
+        x: 280, y: 150, hat: 'tophat', stroke: '#555',
+      }),
+    ],
+    bubbles: [
+      bubble('Want to grab coffee?', {
+        x: 150, y: 30, tailX: 80, tailY: 75,
+      }),
+      bubble('Ha ha! Absolutely!', {
+        x: 330, y: 30, tailX: 280, tailY: 75,
+      }),
+    ],
+    caption: '5 minutes later...',
+  }))
+
+return comic`,
+
+    action: `// Action Scene - Battle with visual effects
+const hero = figure('Hero', {
+  expression: 'angry', pose: POSES.kicking,
+  x: 100, y: 140,
+  stroke: '#1a237e', hair: 'mohawk', scale: 1.1,
+})
+const villain = figure('Villain', {
+  expression: 'scared',
+  pose: pose({
+    leftArm: { shoulder: 50, elbow: -30 },
+    rightArm: { shoulder: -50, elbow: 30 },
+    leftLeg: { hip: 30, knee: 20 },
+    rightLeg: { hip: -40, knee: 15 },
+    bodyLean: -5, headTilt: 15,
+  }),
+  x: 300, y: 145,
+  stroke: '#b71c1c', hat: 'cowboy',
+})
+
+return strip({ title: 'EPIC BATTLE', layout: 'column', width: 400 })
+  .addPanel(panel({
+    background: '#fff3e0', height: 300,
+    figures: [hero, villain],
+    bubbles: [
+      bubble('Take this!', {
+        x: 100, y: 30,
+        tailX: 100, tailY: 70,
+        style: 'shout',
+      }),
+    ],
+    effects: [
+      { type: 'speed-lines', x: 90, y: 120, startAngle: 200, spread: 50, count: 8, length: 70 },
+    ],
+  }))
+  .addPanel(panel({
+    background: '#fce4ec', height: 280,
+    figures: [
+      figure('Villain', {
+        expression: 'defeated',
+        pose: pose({
+          leftArm: { shoulder: 40, elbow: -40 },
+          rightArm: { shoulder: -40, elbow: 40 },
+          leftLeg: { hip: 10, knee: 30 },
+          rightLeg: { hip: -10, knee: 25 },
+          bodyLean: 5, headTilt: -15,
+        }),
+        x: 200, y: 165,
+        stroke: '#b71c1c', hat: 'cowboy',
+      }),
+    ],
+    bubbles: [
+      bubble('Maybe next time...', {
+        x: 200, y: 30,
+        tailX: 200, tailY: 80,
+      }),
+    ],
+    caption: 'Victory!',
+  }))`,
+
+    custom_pose: `// Custom Poses - Create your own pose from scratch
+const casual = pose({
+  leftArm: { shoulder: 20, elbow: -30 },
+  rightArm: { shoulder: -15, elbow: -10 },
+  leftLeg: { hip: 8, knee: 0 },
+  rightLeg: { hip: -8, knee: 0 },
+  headTilt: -5,
+})
+
+const dramatic = pose({
+  leftArm: { shoulder: -120, elbow: -40 },
+  rightArm: { shoulder: 120, elbow: 40 },
+  leftLeg: { hip: 30, knee: 0 },
+  rightLeg: { hip: -20, knee: 10 },
+  bodyLean: 8,
+  headTilt: -10,
+})
+
+const slouch = pose({
+  leftArm: { shoulder: 30, elbow: -20 },
+  rightArm: { shoulder: -30, elbow: -20 },
+  leftLeg: { hip: 15, knee: 5 },
+  rightLeg: { hip: -15, knee: 5 },
+  bodyLean: 12,
+  headTilt: 8,
+})
+
+const fig1 = figure('Casual', {
+  expression: 'happy', pose: casual,
+  x: 80, y: 160, scale: 0.9, stroke: '#2d5016',
+})
+const fig2 = figure('Dramatic', {
+  expression: 'angry', pose: dramatic,
+  x: 260, y: 155, scale: 0.9, stroke: '#8b1a1a',
+})
+const fig3 = figure('Slouching', {
+  expression: 'sad', pose: slouch,
+  x: 440, y: 165, scale: 0.9, stroke: '#4a4a4a',
+})
+
+return strip({ title: 'Custom Poses', layout: 'row', width: 800 })
+  .addPanel(panel({
+    background: '#f9fbe7',
+    figures: [fig1, fig2, fig3],
+    bubbles: [
+      bubble('Casual', { x: 80, y: 30, tailX: 80, tailY: 80 }),
+      bubble('Dramatic!', { x: 260, y: 30, tailX: 260, tailY: 80, style: 'shout' }),
+      bubble('Meh...', { x: 440, y: 30, tailX: 440, tailY: 80 }),
+    ],
+  }))`,
+
+    all_bubbles: `// All three bubble styles: speech, thought, and shout
+const alice = figure('Alice', {
+  expression: 'happy', pose: POSES.standing,
+  x: 100, y: 155, stroke: '#555',
+})
+
+return strip({ title: 'Bubble Styles', layout: 'column', width: 350 })
+  .addPanel(panel({
+    background: '#f0fff4', height: 230,
+    figures: [
+      figure('A', { expression: 'happy', x: 175, y: 155, stroke: '#555' }),
+    ],
+    bubbles: [
+      bubble('I said something normal!', {
+        x: 175, y: 50, tailX: 175, tailY: 100,
+        style: 'speech',
+      }),
+    ],
+    caption: 'Speech Bubble',
+  }))
+  .addPanel(panel({
+    background: '#eff6ff', height: 230,
+    figures: [
+      figure('B', { expression: 'thinking', x: 175, y: 155, stroke: '#555' }),
+    ],
+    bubbles: [
+      bubble('I wonder what that means...', {
+        x: 175, y: 50, tailX: 175, tailY: 100,
+        style: 'thought',
+      }),
+    ],
+    caption: 'Thought Bubble',
+  }))
+  .addPanel(panel({
+    background: '#fef2f2', height: 230,
+    figures: [
+      figure('C', { expression: 'angry', x: 175, y: 155, stroke: '#555' }),
+    ],
+    bubbles: [
+      bubble('HEY!!!', {
+        x: 175, y: 50, tailX: 175, tailY: 100,
+        style: 'shout',
+      }),
+    ],
+    caption: 'Shout Bubble',
+  }))`,
+
+    character_styles: `// Character Styles - Hair and Hat combinations
+const styles = [
+  { label: 'Default',    hair: null,      hat: null,       expression: 'happy' },
+  { label: 'Spiky',      hair: 'spiky',   hat: null,       expression: 'angry' },
+  { label: 'Long Hair',  hair: 'long',    hat: null,       expression: 'wink' },
+  { label: 'Curly',      hair: 'curly',   hat: null,       expression: 'happy' },
+  { label: 'Mohawk',     hair: 'mohawk',  hat: null,       expression: 'angry' },
+  { label: 'Top Hat',    hair: null,      hat: 'tophat',   expression: 'surprised' },
+  { label: 'Cap',        hair: null,      hat: 'cap',       expression: 'laughing' },
+  { label: 'Cowboy',     hair: null,      hat: 'cowboy',    expression: 'happy' },
+]
+
+const figures = styles.map((s, i) => {
+  const col = i % 4
+  const row = Math.floor(i / 4)
+  const opts = {
+    x: 60 + col * 150,
+    y: 110 + row * 140,
+    scale: 0.8,
+    stroke: '#333',
+  }
+  if (s.hair) opts.hair = s.hair
+  if (s.hat) opts.hat = s.hat
+  opts.expression = s.expression
+  return figure(s.label, opts)
+})
+
+const bubbles = styles.map((s, i) => {
+  const col = i % 4
+  const row = Math.floor(i / 4)
+  return bubble(s.label, {
+    x: 60 + col * 150,
+    y: 15 + row * 140,
+    fontSize: 10,
+    maxWidth: 110,
+  })
+})
+
+return strip({ title: 'Character Styles', layout: 'row', width: 620 })
+  .addPanel(panel({
+    height: 340,
+    background: '#fafafa',
+    figures: figures,
+    bubbles: bubbles,
+  }))`,
+
+    effects: `// Visual Effects - Speed lines, anger marks, sweat drops
+return strip({ title: 'Visual Effects', layout: 'row', width: 800 })
+  .addPanel(panel({
+    background: '#fff8e1', height: 300,
+    figures: [
+      figure('Runner', {
+        expression: 'scared', pose: POSES.running,
+        x: 150, y: 150, stroke: '#555',
+      }),
+    ],
+    effects: [
+      { type: 'speed-lines', x: 50, y: 140, startAngle: 180, spread: 40, count: 8, length: 100, stroke: '#ccc' },
+    ],
+    caption: 'Speed Lines',
+  }))
+  .addPanel(panel({
+    background: '#ffebee', height: 300,
+    figures: [
+      figure('Angry', {
+        expression: 'angry', pose: POSES.pointing,
+        x: 130, y: 150, stroke: '#555',
+      }),
+    ],
+    effects: [
+      { type: 'anger', x: 110, y: 110 },
+    ],
+    caption: 'Anger Marks',
+  }))
+  .addPanel(panel({
+    background: '#e3f2fd', height: 300,
+    figures: [
+      figure('Nervous', {
+        expression: 'scared', pose: POSES.shrugging,
+        x: 130, y: 150, stroke: '#555',
+      }),
+    ],
+    effects: [
+      { type: 'sweat', x: 115, y: 100 },
+    ],
+    caption: 'Sweat Drops',
+  }))`,
+
+    vertical_strip: `// Vertical Scroll - Column layout comic
+const comic = strip({
+  title: 'A Day in the Life',
+  layout: 'column',
+  width: 400,
+})
+
+const scene1_guy = figure('Up', {
+  expression: 'happy', pose: POSES.standing,
+  x: 130, y: 150, stroke: '#555', hair: 'curly',
+})
+
+const scene2_guy = figure('Down', {
+  expression: 'sad', pose: POSES.defeated,
+  x: 130, y: 160, stroke: '#555', hair: 'curly',
+})
+
+const scene3_guy = figure('Up again!', {
+  expression: 'laughing', pose: POSES.armsUp,
+  x: 200, y: 155, stroke: '#555', hair: 'curly',
+})
+
+comic
+  .addPanel(panel({
+    background: '#e8f5e9', height: 260,
+    figures: [scene1_guy],
+    bubbles: [
+      bubble('Today is going to be great!', {
+        x: 200, y: 35, tailX: 130, tailY: 85,
+      }),
+    ],
+    caption: 'Morning',
+  }))
+  .addPanel(panel({
+    background: '#fbe9e7', height: 280,
+    figures: [scene2_guy],
+    bubbles: [
+      bubble('Everything went wrong...', {
+        x: 200, y: 35, tailX: 130, tailY: 95, style: 'thought',
+      }),
+    ],
+    caption: 'Afternoon',
+  }))
+  .addPanel(panel({
+    background: '#e8eaf6', height: 260,
+    figures: [scene3_guy],
+    bubbles: [
+      bubble('But it all works out!', {
+        x: 200, y: 35, tailX: 200, tailY: 85,
+      }),
+    ],
+    caption: 'Evening',
+  }))
+
+return comic`,
+  };
+
+  // ── DOM ──
+  var editor = document.getElementById('editor');
+  var preview = document.getElementById('preview');
+  var errorPanel = document.getElementById('errorPanel');
+  var statusDot = document.getElementById('statusDot');
+  var statusText = document.getElementById('statusText');
+  var exampleSelect = document.getElementById('examples');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var copyBtn = document.getElementById('copyBtn');
+  var renderBtn = document.getElementById('renderBtn');
+  var zoomFit = document.getElementById('zoomFit');
+  var zoom100 = document.getElementById('zoom100');
+  var resizer = document.getElementById('resizer');
+  var editorPanel = document.getElementById('editorPanel');
+  var previewPanel = document.getElementById('previewPanel');
+
+  var currentSvg = '';
+  var debounceTimer = null;
+
+  // ── Load default example ──
+  editor.value = EXAMPLES.hello;
+
+  // ── Render ──
+  function render() {
+    clearTimeout(debounceTimer);
+    var code = editor.value.trim();
+    if (!code) {
+      preview.innerHTML = '<div style="color:#999;font-family:sans-serif;font-size:14px;">Write code on the left and press Run (or Ctrl+Enter)</div>';
+      errorPanel.classList.remove('visible');
+      statusDot.className = 'dot';
+      statusText.textContent = 'Ready';
+      currentSvg = '';
+      return;
+    }
+    try {
+      var apiNames = Object.keys(F);
+      var apiValues = apiNames.map(function(k) { return F[k]; });
+      var fn = new Function(apiNames.join(', '), code);
+      var result = fn.apply(null, apiValues);
+      if (!result || typeof result.render !== 'function') {
+        throw new Error('Code must return a strip() or panel() object. Got: ' + typeof result);
+      }
+      currentSvg = result.render();
+      preview.innerHTML = currentSvg;
+      var svgEl = preview.querySelector('svg');
+      if (svgEl) svgEl.style.maxWidth = '100%';
+      errorPanel.classList.remove('visible');
+      statusDot.className = 'dot';
+      statusText.textContent = 'Rendered';
+    } catch (e) {
+      errorPanel.textContent = e.message;
+      errorPanel.classList.add('visible');
+      statusDot.className = 'dot error';
+      statusText.textContent = 'Error';
+    }
+  }
+
+  // ── Auto-render on change with debounce ──
+  editor.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    statusText.textContent = 'Editing...';
+    debounceTimer = setTimeout(render, 600);
+  });
+
+  // ── Ctrl+Enter to render ──
+  editor.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      render();
+    }
+    // Tab key inserts spaces
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      var start = editor.selectionStart;
+      var end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+    }
+  });
+
+  // ── Render button ──
+  renderBtn.addEventListener('click', render);
+
+  // ── Examples dropdown ──
+  exampleSelect.addEventListener('change', function() {
+    var key = exampleSelect.value;
+    if (key && EXAMPLES[key]) {
+      editor.value = EXAMPLES[key];
+      exampleSelect.value = '';
+      render();
+    }
+  });
+
+  // ── Download SVG ──
+  downloadBtn.addEventListener('click', function() {
+    if (!currentSvg) return;
+    var blob = new Blob([currentSvg], { type: 'image/svg+xml' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'comic.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ── Copy SVG ──
+  copyBtn.addEventListener('click', function() {
+    if (!currentSvg) return;
+    navigator.clipboard.writeText(currentSvg).then(function() {
+      statusText.textContent = 'Copied!';
+      setTimeout(function() { statusText.textContent = currentSvg ? 'Rendered' : 'Ready'; }, 1500);
+    });
+  });
+
+  // ── Zoom ──
+  zoomFit.addEventListener('click', function() {
+    var svgEl = preview.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.maxWidth = '100%';
+      svgEl.style.width = '';
+    }
+  });
+  zoom100.addEventListener('click', function() {
+    var svgEl = preview.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.maxWidth = 'none';
+      svgEl.style.width = '';
+    }
+  });
+
+  // ── Resizer ──
+  var isResizing = false;
+  resizer.addEventListener('mousedown', function(e) {
+    isResizing = true;
+    resizer.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isResizing) return;
+    var container = document.querySelector('.main');
+    var totalWidth = container.offsetWidth;
+    var newEditorWidth = (e.clientX / totalWidth) * 100;
+    newEditorWidth = Math.max(25, Math.min(75, newEditorWidth));
+    editorPanel.style.width = newEditorWidth + '%';
+    previewPanel.style.width = (100 - newEditorWidth) + '%';
+  });
+  document.addEventListener('mouseup', function() {
+    if (isResizing) {
+      isResizing = false;
+      resizer.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+
+  // ── Initial render ──
+  render();
+
+})();
+</script>
+
+</body>
+</html>
