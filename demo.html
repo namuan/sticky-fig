@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Fig - Stick Figure Comic DSL</title>
+  <script src="dist/stickyfig.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f0f0;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+    header {
+      background: #1a1a2e;
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.85;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .section h2 {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      color: #1a1a2e;
+    }
+    .section .subtitle {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+    .comic-display {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .comic-display svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .expressions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .expression-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 1rem 0.5rem;
+      border: 1px solid #eee;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .expression-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .expression-card .label {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      color: #555;
+      text-transform: capitalize;
+    }
+    .poses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .pose-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 1rem 0.5rem;
+      border: 1px solid #eee;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .pose-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .pose-card .label {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      color: #555;
+      text-transform: capitalize;
+    }
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .style-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 1rem 0.5rem;
+      border: 1px solid #eee;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .style-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .style-card .label {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      color: #555;
+    }
+    .bubble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      .bubble-grid { grid-template-columns: 1fr; }
+    }
+    .bubble-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 1.5rem;
+      border: 1px solid #eee;
+    }
+    .bubble-card .label {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+      color: #555;
+      text-transform: capitalize;
+    }
+    .code-block {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      font-family: 'Fira Code', 'SF Mono', 'Monaco', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+      margin: 1rem 0;
+    }
+    .code-block .kw { color: #cba6f7; }
+    .code-block .str { color: #a6e3a1; }
+    .code-block .num { color: #fab387; }
+    .code-block .fn { color: #89b4fa; }
+    .code-block .cmt { color: #6c7086; font-style: italic; }
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    .api-table th, .api-table td {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #eee;
+    }
+    .api-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+    }
+    .api-table td {
+      font-size: 0.9rem;
+    }
+    .api-table code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #999;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Sticky Fig</h1>
+  <p>A JavaScript DSL for generating stick figure comic strips as SVG</p>
+</header>
+
+<div class="container">
+
+  <!-- Expressions Gallery -->
+  <div class="section">
+    <h2>Expressions</h2>
+    <p class="subtitle">12 built-in facial expressions for your characters</p>
+    <div id="expressions-grid" class="expressions-grid"></div>
+  </div>
+
+  <!-- Poses Gallery -->
+  <div class="section">
+    <h2>Poses</h2>
+    <p class="subtitle">12 preset poses for body language</p>
+    <div id="poses-grid" class="poses-grid"></div>
+  </div>
+
+  <!-- Hair & Hats -->
+  <div class="section">
+    <h2>Hair & Hats</h2>
+    <p class="subtitle">Character styles with hair and accessories</p>
+    <div id="styles-grid" class="style-grid"></div>
+  </div>
+
+  <!-- Speech Bubbles -->
+  <div class="section">
+    <h2>Speech Bubbles</h2>
+    <p class="subtitle">Three bubble styles: speech, thought, and shout</p>
+    <div id="bubble-grid" class="bubble-grid"></div>
+  </div>
+
+  <!-- Comic Strip Demo 1 -->
+  <div class="section">
+    <h2>Comic Strip - Row Layout</h2>
+    <p class="subtitle">A multi-panel comic strip in horizontal layout</p>
+    <div id="comic1" class="comic-display"></div>
+  </div>
+
+  <!-- Comic Strip Demo 2 -->
+  <div class="section">
+    <h2>Comic Strip - Column Layout</h2>
+    <p class="subtitle">A multi-panel comic strip in vertical layout</p>
+    <div id="comic2" class="comic-display"></div>
+  </div>
+
+  <!-- API Reference -->
+  <div class="section">
+    <h2>API Reference</h2>
+    <p class="subtitle">Quick reference for the Sticky Fig DSL</p>
+
+    <table class="api-table">
+      <tr><th>Function</th><th>Description</th><th>Example</th></tr>
+      <tr><td><code>figure(name, opts)</code></td><td>Create a stick figure character</td><td><code>figure('Alice', { expression: 'happy', pose: POSES.waving, x: 100, y: 150 })</code></td></tr>
+      <tr><td><code>pose(opts)</code></td><td>Create a custom pose</td><td><code>pose({ leftArm: {shoulder: 30, elbow: -20} })</code></td></tr>
+      <tr><td><code>bubble(text, opts)</code></td><td>Create a speech bubble</td><td><code>bubble('Hello!', { x: 140, y: 30, tailX: 100, tailY: 70 })</code></td></tr>
+      <tr><td><code>panel(opts)</code></td><td>Create a comic panel</td><td><code>panel({ figures: [...], bubbles: [...], caption: 'Later...' })</code></td></tr>
+      <tr><td><code>strip(opts)</code></td><td>Create a comic strip</td><td><code>strip({ title: 'My Comic', layout: 'row', width: 800 })</code></td></tr>
+    </table>
+
+    <h3 style="margin-top:1.5rem;font-size:1.1rem;">Figure Options</h3>
+    <table class="api-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>x</code>, <code>y</code></td><td>number</td><td>0</td><td>Position in panel</td></tr>
+      <tr><td><code>expression</code></td><td>string</td><td>'neutral'</td><td>Facial expression</td></tr>
+      <tr><td><code>pose</code></td><td>Pose / object</td><td>standing</td><td>Body pose</td></tr>
+      <tr><td><code>stroke</code></td><td>string</td><td>'black'</td><td>Stroke color</td></tr>
+      <tr><td><code>scale</code></td><td>number</td><td>1</td><td>Figure size multiplier</td></tr>
+      <tr><td><code>hair</code></td><td>string</td><td>null</td><td>'spiky' | 'long' | 'curly' | 'mohawk'</td></tr>
+      <tr><td><code>hat</code></td><td>string</td><td>null</td><td>'tophat' | 'cap' | 'cowboy'</td></tr>
+    </table>
+
+    <h3 style="margin-top:1.5rem;font-size:1.1rem;">Example Code</h3>
+    <div class="code-block"><span class="kw">const</span> { figure, POSES, bubble, panel, strip } = <span class="fn">StickyFig</span>
+
+<span class="kw">const</span> alice = <span class="fn">figure</span>(<span class="str">'Alice'</span>, {
+  expression: <span class="str">'happy'</span>,
+  pose: POSES.waving,
+  x: <span class="num">80</span>, y: <span class="num">150</span>,
+  hair: <span class="str">'long'</span>,
+})
+
+<span class="kw">const</span> comic = <span class="fn">strip</span>({ title: <span class="str">'My Comic'</span>, width: <span class="num">800</span> })
+comic
+  .<span class="fn">addPanel</span>(<span class="fn">panel</span>({
+    figures: [alice],
+    bubbles: [<span class="fn">bubble</span>(<span class="str">'Hello!'</span>, { x: <span class="num">140</span>, y: <span class="num">30</span> })],
+  }))
+  .<span class="fn">addPanel</span>(<span class="fn">panel</span>({
+    figures: [<span class="fn">figure</span>(<span class="str">'Bob'</span>, { expression: <span class="str">'surprised'</span>, x: <span class="num">100</span>, y: <span class="num">150</span> })],
+    bubbles: [<span class="fn">bubble</span>(<span class="str">'Oh!'</span>, { x: <span class="num">140</span>, y: <span class="num">30</span>, style: <span class="str">'shout'</span> })],
+    background: <span class="str">'#ffebee'</span>,
+  }))
+
+<span class="kw">const</span> svg = comic.<span class="fn">render</span>() <span class="cmt">// returns SVG string</span></div>
+  </div>
+
+</div>
+
+<footer>
+  Sticky Fig &mdash; A JavaScript DSL for stick figure comics
+</footer>
+
+<script>
+(function() {
+  var F = StickyFig;
+  var P = F.POSES;
+  var E = Object.keys(F.EXPRESSIONS);
+
+  // Helper: render a figure into a standalone SVG card
+  function figureCard(fig, w, h) {
+    // Center the figure in the card by adjusting its position
+    var cFig = F.figure(fig.name, Object.assign({}, fig, { x: w / 2, y: h - 30, scale: fig.scale || 1, expression: fig.expression, pose: fig.pose, hair: fig.hair, hat: fig.hat, stroke: fig.stroke }));
+    var p = F.panel({ width: w, height: h, figures: [cFig], border: false, background: '#fafafa' });
+    return p.render();
+  }
+
+  // ── Expressions Gallery ──
+  var exprGrid = document.getElementById('expressions-grid');
+  E.forEach(function(expr) {
+    var card = document.createElement('div');
+    card.className = 'expression-card';
+    var fig = F.figure(expr, { expression: expr, scale: 0.85, stroke: '#333' });
+    card.innerHTML = figureCard(fig, 160, 160) + '<div class="label">' + expr + '</div>';
+    exprGrid.appendChild(card);
+  });
+
+  // ── Poses Gallery ──
+  var poseGrid = document.getElementById('poses-grid');
+  Object.keys(P).forEach(function(name) {
+    var card = document.createElement('div');
+    card.className = 'pose-card';
+    var fig = F.figure(name, { pose: P[name], scale: 0.85, stroke: '#333' });
+    card.innerHTML = figureCard(fig, 160, 170) + '<div class="label">' + name + '</div>';
+    poseGrid.appendChild(card);
+  });
+
+  // ── Hair & Hats Gallery ──
+  var styleGrid = document.getElementById('styles-grid');
+  var styles = [
+    { label: 'Default (no hair)', hair: null, hat: null },
+    { label: 'Spiky Hair', hair: 'spiky', hat: null },
+    { label: 'Long Hair', hair: 'long', hat: null },
+    { label: 'Curly Hair', hair: 'curly', hat: null },
+    { label: 'Mohawk', hair: 'mohawk', hat: null },
+    { label: 'Top Hat', hair: null, hat: 'tophat' },
+    { label: 'Cap', hair: null, hat: 'cap' },
+    { label: 'Cowboy Hat', hair: null, hat: 'cowboy' },
+    { label: 'Spiky + Top Hat', hair: 'spiky', hat: 'tophat' },
+    { label: 'Long + Cap', hair: 'long', hat: 'cap' },
+  ];
+  styles.forEach(function(s) {
+    var card = document.createElement('div');
+    card.className = 'style-card';
+    var opts = { scale: 0.85, expression: 'happy', stroke: '#333' };
+    if (s.hair) opts.hair = s.hair;
+    if (s.hat) opts.hat = s.hat;
+    var fig = F.figure(s.label, opts);
+    card.innerHTML = figureCard(fig, 160, 170) + '<div class="label">' + s.label + '</div>';
+    styleGrid.appendChild(card);
+  });
+
+  // ── Speech Bubbles Gallery ──
+  var bubbleGrid = document.getElementById('bubble-grid');
+  var bubbleStyles = [
+    { style: 'speech', text: 'Hello there!', label: 'Speech' },
+    { style: 'thought', text: 'Hmm...', label: 'Thought' },
+    { style: 'shout', text: 'HEY!', label: 'Shout' },
+  ];
+  bubbleStyles.forEach(function(b) {
+    var card = document.createElement('div');
+    card.className = 'bubble-card';
+    var bbl = F.bubble(b.text, { x: 150, y: 60, tailX: 150, tailY: 110, style: b.style });
+    var fig = F.figure('fig', { expression: b.style === 'shout' ? 'surprised' : 'neutral', x: 150, y: 150, scale: 0.8 });
+    var p = F.panel({ width: 300, height: 220, figures: [fig], bubbles: [bbl], border: true });
+    card.innerHTML = '<div class="label">' + b.label + '</div><div class="comic-display">' + p.render() + '</div>';
+    bubbleGrid.appendChild(card);
+  });
+
+  // ── Comic Strip 1: Row Layout ──
+  var comic1 = F.strip({
+    title: 'Stick Figure Adventures',
+    layout: 'row',
+    width: 800,
+  });
+
+  var alice = F.figure('Alice', { expression: 'happy', pose: P.waving, x: 80, y: 150, stroke: '#333', hair: 'long', scale: 1.1 });
+  var bob = F.figure('Bob', { expression: 'surprised', pose: P.standing, x: 250, y: 150, stroke: '#333', hat: 'tophat' });
+
+  var carol = F.figure('Carol', { expression: 'angry', pose: P.pointing, x: 80, y: 140, stroke: '#333', hair: 'spiky' });
+  var dave = F.figure('Dave', { expression: 'laughing', pose: P.armsUp, x: 250, y: 140, stroke: '#333', hair: 'curly' });
+
+  var thinker = F.figure('T', { expression: 'thinking', pose: P.thinking2, x: 100, y: 150, stroke: '#555', hair: 'curly', scale: 0.95 });
+
+  comic1
+    .addPanel(F.panel({
+      background: '#fff8e1',
+      figures: [alice, bob],
+      bubbles: [
+        F.bubble('Hey Bob!', { x: 130, y: 30, tailX: 85, tailY: 70 }),
+        F.bubble('Oh, hi Alice!', { x: 280, y: 30, tailX: 250, tailY: 70 }),
+      ],
+      caption: 'Meanwhile...',
+    }))
+    .addPanel(F.panel({
+      background: '#ffebee',
+      figures: [carol, dave],
+      bubbles: [
+        F.bubble('That was TERRIBLE!', { x: 140, y: 30, tailX: 80, tailY: 70, style: 'shout' }),
+        F.bubble('Ha ha ha!', { x: 270, y: 30, tailX: 250, tailY: 70 }),
+      ],
+      effects: [{ type: 'anger', x: 80, y: 125 }],
+    }))
+    .addPanel(F.panel({
+      background: '#e3f2fd',
+      figures: [thinker],
+      bubbles: [
+        F.bubble('Hmm... where did they go?', { x: 200, y: 30, tailX: 110, tailY: 70, style: 'thought' }),
+      ],
+    }));
+
+  document.getElementById('comic1').innerHTML = comic1.render();
+
+  // ── Comic Strip 2: Column Layout ──
+  var comic2 = F.strip({
+    title: 'EPIC BATTLE',
+    layout: 'column',
+    width: 400,
+  });
+
+  var hero = F.figure('Hero', { expression: 'angry', pose: P.kicking, x: 100, y: 145, stroke: '#1a237e', hair: 'mohawk', scale: 1.15 });
+  var villain = F.figure('Villain', { expression: 'scared', pose: F.pose({ leftArm: { shoulder: 50, elbow: -30 }, rightArm: { shoulder: -50, elbow: 30 }, leftLeg: { hip: 30, knee: 20 }, rightLeg: { hip: -40, knee: 15 }, bodyLean: -5, headTilt: 15 }), x: 280, y: 150, stroke: '#b71c1c', hat: 'cowboy' });
+  var onlooker = F.figure('O', { expression: 'surprised', pose: P.standing, x: 200, y: 155, stroke: '#333', scale: 0.8 });
+  var defeated = F.figure('V2', { expression: 'dead', pose: P.defeated, x: 250, y: 170, stroke: '#b71c1c', hat: 'cowboy', scale: 0.9 });
+
+  comic2
+    .addPanel(F.panel({
+      background: '#fff3e0',
+      height: 300,
+      figures: [hero, villain],
+      bubbles: [
+        F.bubble('Take this!', { x: 100, y: 35, tailX: 100, tailY: 75, style: 'shout' }),
+      ],
+      effects: [{ type: 'speed-lines', x: 80, y: 120, startAngle: 200, spread: 60, count: 10, length: 80 }],
+    }))
+    .addPanel(F.panel({
+      background: '#fce4ec',
+      height: 300,
+      figures: [onlooker, defeated],
+      bubbles: [
+        F.bubble('Oh no!', { x: 200, y: 35, tailX: 200, tailY: 100 }),
+      ],
+    }));
+
+  document.getElementById('comic2').innerHTML = comic2.render();
+
+})();
+</script>
+
+</body>
+</html>

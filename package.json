@@ -1,0 +1,25 @@
+{
+  "name": "sticky-fig",
+  "version": "1.0.0",
+  "description": "A DSL for generating stick figure comic strips as SVG",
+  "main": "index.js",
+  "bin": {
+    "stickyfig": "./bin/stickyfig.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "node examples/basic.js"
+  },
+  "keywords": [
+    "comic",
+    "stick-figure",
+    "svg",
+    "dsl"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "yargs": "18.0.0"
+  }
+}
