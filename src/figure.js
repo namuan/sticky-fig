@@ -15,6 +15,11 @@ const EXPRESSIONS = {
   dizzy: { eyes: 'spiral', mouth: 'wavy' },
 }
 
+const { Animation, animation: mkAnimation } = require('./animation')
+
+const ANIM_ID_PREFIX = 'sffig'
+let _figIdCounter = 0
+
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val))
 }
@@ -52,6 +57,11 @@ class StickFigure {
     this.hair = opts.hair || null
     this.hat = opts.hat || null
     this.accessories = opts.accessories || []
+    this.animation = opts.animation || null
+    if (this.animation && !(this.animation instanceof Animation)) {
+      this.animation = mkAnimation(this.animation)
+    }
+    this._animId = ANIM_ID_PREFIX + (_figIdCounter++)
   }
 
   neckX() {
@@ -99,7 +109,21 @@ class StickFigure {
     if (this.hair) els.push(...this._renderHair(headX, headY))
     if (this.hat) els.push(...this._renderHat(headX, headY))
 
-    return svg.group(els, { transform: svg.translate(tx, ty) })
+    const groupOpts = { transform: svg.translate(tx, ty) }
+
+    if (this.animation) {
+      return svg.group(
+        [svg.group(els, {})],
+        {
+          ...groupOpts,
+          id: this._animId,
+          className: this._animId,
+          style: this.animation.getInlineStyle(),
+        }
+      )
+    }
+
+    return svg.group(els, groupOpts)
   }
 
   _renderHead(hx, hy) {

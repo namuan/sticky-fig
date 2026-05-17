@@ -260,6 +260,7 @@
     <option value="character_styles">Hair &amp; Hats</option>
     <option value="effects">Visual Effects</option>
     <option value="vertical_strip">Vertical Strip</option>
+    <option value="animations">Animations</option>
   </select>
   <button id="renderBtn" title="Render (Ctrl+Enter)">&#9654; Run</button>
   <div class="spacer"></div>
@@ -712,6 +713,55 @@ comic
   }))
 
 return comic`,
+
+    animations: `// Animations - Bring your comics to life!
+// Available presets: bounce, wave, shake, fade-in, pop, float,
+// pulse, jitter, slide-left, slide-right, slide-up, slide-down, spin, pop-in
+
+const alice = figure('Alice', {
+  expression: 'happy',
+  pose: POSES.waving,
+  x: 80, y: 150,
+  hair: 'long',
+  animation: 'bounce',
+})
+
+const bob = figure('Bob', {
+  expression: 'surprised',
+  pose: POSES.standing,
+  x: 250, y: 150,
+  stroke: '#555',
+  animation: { type: 'fade-in', duration: 1.5 },
+})
+
+const thought = figure('Thinking...', {
+  expression: 'thinking',
+  pose: POSES.thinking2,
+  x: 430, y: 150,
+  stroke: '#777',
+  animation: 'float',
+})
+
+return strip({ title: 'Animated!', layout: 'row', width: 800 })
+  .addPanel(panel({
+    background: '#f0fff0',
+    figures: [alice, bob, thought],
+    bubbles: [
+      bubble('Hey!', {
+        x: 130, y: 30, tailX: 80, tailY: 75,
+        animation: 'pop',
+      }),
+      bubble('Oh! Hello!', {
+        x: 280, y: 30, tailX: 250, tailY: 75,
+        animation: { type: 'slide-left', duration: 0.8 },
+      }),
+      bubble('Hmm...', {
+        x: 460, y: 30, tailX: 430, tailY: 75,
+        animation: { type: 'fade-in', duration: 1.2, delay: 0.5 },
+        style: 'thought',
+      }),
+    ],
+  }))`,
   };
 
   // ── DOM ──

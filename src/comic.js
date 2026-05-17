@@ -1,4 +1,8 @@
 const svg = require('./svg')
+const { Animation, animation: mkAnimation, collectAnimationStyles } = require('./animation')
+
+let _bubbleIdCounter = 0
+const BUBBLE_ID_PREFIX = 'sfbbl'
 
 class SpeechBubble {
   constructor(text, opts = {}) {
@@ -15,6 +19,11 @@ class SpeechBubble {
     this.padding = opts.padding || 12
     this.maxWidth = opts.maxWidth || 150
     this.bold = opts.bold || false
+    this.animation = opts.animation || null
+    if (this.animation && !(this.animation instanceof Animation)) {
+      this.animation = mkAnimation(this.animation)
+    }
+    this._animId = BUBBLE_ID_PREFIX + (_bubbleIdCounter++)
   }
 
   render() {
@@ -144,7 +153,15 @@ class Panel {
     }
 
     for (const bubble of this.bubbles) {
-      els.push(...bubble.render())
+      if (bubble.animation) {
+        els.push(svg.group(bubble.render(), {
+          id: bubble._animId,
+          className: bubble._animId,
+          style: bubble.animation.getInlineStyle(),
+        }))
+      } else {
+        els.push(...bubble.render())
+      }
     }
 
     if (this.caption) {
@@ -154,10 +171,26 @@ class Panel {
     return els
   }
 
+  collectAnimations() {
+    const animations = []
+    for (const fig of this.figures) {
+      if (fig.animation) animations.push(fig.animation)
+    }
+    for (const bubble of this.bubbles) {
+      if (bubble.animation) animations.push(bubble.animation)
+    }
+    return animations
+  }
+
   render() {
     const canvas = new svg.SvgCanvas(this.width, this.height)
     canvas.addDef(svg.clipPath('clip-panel', this.width, this.height))
     canvas.add(svg.group(this.renderElements(), { clipPath: 'clip-panel' }))
+
+    const anims = this.collectAnimations()
+    if (anims.length > 0) {
+      canvas.addStyle(collectAnimationStyles(anims))
+    }
 
     if (this.border) {
       canvas.add(svg.rect(0, 0, this.width, this.height, {
@@ -265,6 +298,7 @@ class ComicStrip {
       }
 
       let currentX = 0
+      const allAnimations = []
       for (let i = 0; i < this.panels.length; i++) {
         const p = this.panels[i]
         const clipId = `clip-panel-${i}`
@@ -274,7 +308,12 @@ class ComicStrip {
         canvas.add(svg.rect(currentX, titleHeight, panelWidth, panelHeight, {
           fill: 'none', stroke: this.borderColor, width: this.borderWidth
         }))
+        allAnimations.push(...p.collectAnimations())
         currentX += panelWidth + this.gap
+      }
+
+      if (allAnimations.length > 0) {
+        canvas.addStyle(collectAnimationStyles(allAnimations))
       }
 
       canvas.add(svg.rect(0, titleHeight, this.width, panelHeight, {
@@ -301,6 +340,7 @@ class ComicStrip {
       }
 
       let currentY = titleHeight
+      const allAnimations = []
       for (let i = 0; i < this.panels.length; i++) {
         const p = this.panels[i]
         const clipId = `clip-panel-${i}`
@@ -310,7 +350,12 @@ class ComicStrip {
         canvas.add(svg.rect(0, currentY, panelWidth, p.height, {
           fill: 'none', stroke: this.borderColor, width: this.borderWidth
         }))
+        allAnimations.push(...p.collectAnimations())
         currentY += p.height + this.gap
+      }
+
+      if (allAnimations.length > 0) {
+        canvas.addStyle(collectAnimationStyles(allAnimations))
       }
 
       canvas.add(svg.rect(0, titleHeight, this.width, totalHeight - titleHeight, {
