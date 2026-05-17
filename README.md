@@ -2,6 +2,8 @@
 
 A JavaScript DSL for generating stick figure comic strips as SVG.
 
+![](assets/intro.jpg)
+
 ## Install
 
 ```bash
