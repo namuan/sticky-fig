@@ -113,6 +113,24 @@ const PRESETS = {
     defaultDuration: 0.5,
     fill: 'forwards',
   },
+  'walk-cycle': {
+    keyframes: `@keyframes sf-walk-cycle {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  25% { transform: translateY(-8px) rotate(2deg); }
+  50% { transform: translateY(0) rotate(1deg); }
+  75% { transform: translateY(-8px) rotate(2deg); }
+}`,
+    defaultDuration: 1,
+  },
+  'run-cycle': {
+    keyframes: `@keyframes sf-run-cycle {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  25% { transform: translateY(-14px) rotate(5deg); }
+  50% { transform: translateY(0) rotate(3deg); }
+  75% { transform: translateY(-14px) rotate(5deg); }
+}`,
+    defaultDuration: 0.6,
+  },
 }
 
 class Animation {

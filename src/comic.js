@@ -250,6 +250,13 @@ class Panel {
           els.push(svg.line(cx - 5, (fx.y || 0) - 20, cx, (fx.y || 0) - 8, { stroke: fx.stroke || 'red', width: 2 }))
         }
         break
+      case 'ground-line':
+        const gy = fx.y || this.height - 20
+        const gStroke = fx.stroke || '#ccc'
+        const gWidth = fx.width || 2
+        const dash = fx.dash || '8,6'
+        els.push(svg.line(0, gy, this.width, gy, { stroke: gStroke, width: gWidth, dash: dash }))
+        break
     }
     return els
   }

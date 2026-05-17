@@ -261,6 +261,7 @@
     <option value="effects">Visual Effects</option>
     <option value="vertical_strip">Vertical Strip</option>
     <option value="animations">Animations</option>
+    <option value="walking_cycle">Walking &amp; Running</option>
   </select>
   <button id="renderBtn" title="Render (Ctrl+Enter)">&#9654; Run</button>
   <div class="spacer"></div>
@@ -762,6 +763,62 @@ return strip({ title: 'Animated!', layout: 'row', width: 800 })
       }),
     ],
   }))`,
+
+    walking_cycle: `// Walking & Running - Limb animation with SMIL animateTransform
+// Each arm and leg is a chain of two segments with independent rotation
+// walk-cycle: 1s period, subtle body bob, arm swing ~32deg, knee bend ~22deg
+// run-cycle: 0.5s period, bigger body bob, arm swing ~50deg, knee bend ~32deg
+
+const walker = figure('Walker', {
+  expression: 'happy',
+  pose: POSES.standing,
+  x: 150, y: 180,
+  scale: 1.1,
+  stroke: '#2d5016',
+  animation: 'walk-cycle',
+})
+
+const runner = figure('Runner', {
+  expression: 'angry',
+  pose: POSES.running,
+  x: 380, y: 180,
+  scale: 1.1,
+  stroke: '#8b1a1a',
+  hair: 'spiky',
+  animation: { type: 'run-cycle', duration: 0.5 },
+})
+
+const stander = figure('Stander', {
+  expression: 'neutral',
+  pose: POSES.standing,
+  x: 620, y: 180,
+  scale: 1.1,
+  stroke: '#555',
+  hat: 'cap',
+})
+
+return strip({
+  title: 'Walking & Running',
+  layout: 'row',
+  width: 850,
+})
+.addPanel(panel({
+  background: '#fafafa',
+  figures: [walker, runner, stander],
+  bubbles: [
+    bubble('Nice stroll...', {
+      x: 170, y: 45, tailX: 150, tailY: 105,
+    }),
+    bubble('GO GO GO!', {
+      x: 400, y: 40, tailX: 380, tailY: 100,
+      style: 'shout',
+    }),
+  ],
+  effects: [
+    { type: 'ground-line', y: 265, stroke: '#bbb', width: 2 },
+  ],
+  caption: 'Left: walk-cycle  |  Middle: run-cycle  |  Right: no animation',
+}))`,
   };
 
   // ── DOM ──

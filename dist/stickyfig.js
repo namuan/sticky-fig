@@ -265,6 +265,24 @@ const PRESETS = {
     defaultDuration: 0.5,
     fill: 'forwards',
   },
+  'walk-cycle': {
+    keyframes: `@keyframes sf-walk-cycle {
+  0%, 100% { transform: translateY(0) rotate(1deg); }
+  25% { transform: translateY(-8px) rotate(2deg); }
+  50% { transform: translateY(0) rotate(1deg); }
+  75% { transform: translateY(-8px) rotate(2deg); }
+}`,
+    defaultDuration: 1,
+  },
+  'run-cycle': {
+    keyframes: `@keyframes sf-run-cycle {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  25% { transform: translateY(-14px) rotate(5deg); }
+  50% { transform: translateY(0) rotate(3deg); }
+  75% { transform: translateY(-14px) rotate(5deg); }
+}`,
+    defaultDuration: 0.6,
+  },
 }
 
 class Animation {
@@ -471,9 +489,19 @@ class StickFigure {
     const shoulderOffsetX = this.headRadius * 0.6
     const hipOffsetX = this.headRadius * 0.25
 
-    els.push(...this._renderLegs(neckX, hipY, hipOffsetX))
     els.push(...this._renderBody(neckX, neckY, hipY))
-    els.push(...this._renderArms(neckX, shoulderY, shoulderOffsetX))
+
+    const isWalk = this.animation && (this.animation.type === 'walk-cycle' || this.animation.type === 'run-cycle')
+
+    if (isWalk) {
+      els.push(svg.line(neckX - hipOffsetX, hipY, neckX + hipOffsetX, hipY, { stroke: this.stroke, width: this.strokeWidth, cap: 'round' }))
+      els.push(svg.line(neckX - shoulderOffsetX, shoulderY, neckX + shoulderOffsetX, shoulderY, { stroke: this.stroke, width: this.armLineWidth, cap: 'round' }))
+      els.push(...this._renderAnimatedArms(neckX, shoulderY, shoulderOffsetX))
+      els.push(...this._renderAnimatedLegs(neckX, hipY, hipOffsetX))
+    } else {
+      els.push(...this._renderArms(neckX, shoulderY, shoulderOffsetX))
+      els.push(...this._renderLegs(neckX, hipY, hipOffsetX))
+    }
     els.push(...this._renderHead(headX, headY))
 
     if (this.hair) els.push(...this._renderHair(headX, headY))
@@ -483,13 +511,11 @@ class StickFigure {
 
     if (this.animation) {
       return svg.group(
-        [svg.group(els, {})],
-        {
-          ...groupOpts,
-          id: this._animId,
+        [svg.group(els, {
           className: this._animId,
           style: this.animation.getInlineStyle(),
-        }
+        })],
+        groupOpts
       )
     }
 
@@ -665,6 +691,82 @@ class StickFigure {
       els.push(svg.line(kneeX, kneeY, footX, footY, {
         stroke: this.stroke, width: this.strokeWidth, cap: 'round'
       }))
+    }
+
+    return els
+  }
+
+  _makeAnimateTransform(values, dur) {
+    const kt = '0;0.25;0.5;0.75;1'
+    const splines = '0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1'
+    return `<animateTransform attributeName="transform" type="rotate" values="${values}" keyTimes="${kt}" dur="${dur}s" calcMode="spline" keySplines="${splines}" repeatCount="indefinite"/>`
+  }
+
+  _renderAnimatedArms(neckX, shoulderY, shoulderOffset) {
+    const els = []
+    const halfArm = this.armLength * 0.5
+    const isRun = this.animation && this.animation.type === 'run-cycle'
+    const dur = this.animation ? this.animation.getDuration() : (isRun ? 0.6 : 1)
+
+    const lUp = isRun ? '-50;-12;50;12;-50' : '-32;-8;32;8;-32'
+    const rUp = isRun ? '50;12;-50;-12;50' : '32;8;-32;-8;32'
+    const fore = isRun ? '-12;-25;-12;-25;-12' : '-8;-16;-8;-16;-8'
+
+    for (const side of ['left', 'right']) {
+      const dir = side === 'left' ? -1 : 1
+      const sx = neckX + shoulderOffset * dir
+      const upVals = side === 'left' ? lUp : rUp
+      const anim = (vals) => this._makeAnimateTransform(vals, dur)
+      const opts = { stroke: this.stroke, width: this.armLineWidth, cap: 'round' }
+
+      els.push(svg.group([
+        svg.group([
+          anim(upVals),
+          svg.line(0, 0, 0, halfArm, opts),
+          svg.group([
+            svg.group([
+              anim(fore),
+              svg.line(0, 0, 0, halfArm, opts),
+            ]),
+          ], { transform: svg.translate(0, halfArm) }),
+        ]),
+      ], { transform: svg.translate(sx, shoulderY) }))
+    }
+
+    return els
+  }
+
+  _renderAnimatedLegs(neckX, hipY, hipOffset) {
+    const els = []
+    const halfLeg = this.legLength * 0.5
+    const isRun = this.animation && this.animation.type === 'run-cycle'
+    const dur = this.animation ? this.animation.getDuration() : (isRun ? 0.6 : 1)
+
+    const lUp = isRun ? '-45;-10;45;10;-45' : '-28;-7;28;7;-28'
+    const rUp = isRun ? '45;10;-45;-10;45' : '28;7;-28;-7;28'
+    const lLow = isRun ? '0;8;32;8;0' : '0;5;22;5;0'
+    const rLow = isRun ? '32;8;0;8;32' : '22;5;0;5;22'
+
+    for (const side of ['left', 'right']) {
+      const dir = side === 'left' ? -1 : 1
+      const hx = neckX + hipOffset * dir
+      const upVals = side === 'left' ? lUp : rUp
+      const lowVals = side === 'left' ? lLow : rLow
+      const anim = (vals) => this._makeAnimateTransform(vals, dur)
+      const opts = { stroke: this.stroke, width: this.strokeWidth, cap: 'round' }
+
+      els.push(svg.group([
+        svg.group([
+          anim(upVals),
+          svg.line(0, 0, 0, halfLeg, opts),
+          svg.group([
+            svg.group([
+              anim(lowVals),
+              svg.line(0, 0, 0, halfLeg, opts),
+            ]),
+          ], { transform: svg.translate(0, halfLeg) }),
+        ]),
+      ], { transform: svg.translate(hx, hipY) }))
     }
 
     return els
@@ -986,6 +1088,13 @@ class Panel {
           els.push(svg.line(cx, (fx.y || 0) - 20, cx - 5, (fx.y || 0) - 8, { stroke: fx.stroke || 'red', width: 2 }))
           els.push(svg.line(cx - 5, (fx.y || 0) - 20, cx, (fx.y || 0) - 8, { stroke: fx.stroke || 'red', width: 2 }))
         }
+        break
+      case 'ground-line':
+        const gy = fx.y || this.height - 20
+        const gStroke = fx.stroke || '#ccc'
+        const gWidth = fx.width || 2
+        const dash = fx.dash || '8,6'
+        els.push(svg.line(0, gy, this.width, gy, { stroke: gStroke, width: gWidth, dash: dash }))
         break
     }
     return els
