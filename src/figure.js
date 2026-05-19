@@ -82,7 +82,7 @@ class StickFigure {
     return -this.legLength
   }
   shoulderY() {
-    return this.neckY() + this.bodyLength * 0.15
+    return this.neckY()
   }
 
   render() {
@@ -107,7 +107,6 @@ class StickFigure {
 
     if (isWalk) {
       els.push(svg.line(neckX - hipOffsetX, hipY, neckX + hipOffsetX, hipY, { stroke: this.stroke, width: this.strokeWidth, cap: 'round' }))
-      els.push(svg.line(neckX - shoulderOffsetX, shoulderY, neckX + shoulderOffsetX, shoulderY, { stroke: this.stroke, width: this.armLineWidth, cap: 'round' }))
       els.push(...this._renderAnimatedArms(neckX, shoulderY, shoulderOffsetX))
       els.push(...this._renderAnimatedLegs(neckX, hipY, hipOffsetX))
     } else {
@@ -241,8 +240,10 @@ class StickFigure {
   }
 
   _renderBody(neckX, neckY, hipY) {
+    const shoulderW = this.headRadius * 0.6
     return [
-      svg.line(neckX, neckY, neckX, hipY, { stroke: this.stroke, width: this.strokeWidth, cap: 'round' })
+      svg.line(neckX, neckY, neckX, hipY, { stroke: this.stroke, width: this.strokeWidth, cap: 'round' }),
+      svg.line(neckX - shoulderW, neckY, neckX + shoulderW, neckY, { stroke: this.stroke, width: this.armLineWidth, cap: 'round' }),
     ]
   }
 
